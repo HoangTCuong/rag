@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Custom global styles */
+body {
+  @apply bg-gray-100 text-gray-900;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-bold;
+}
+
+a {
+  @apply text-blue-500 hover:text-blue-700;
+}
+
+button {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
