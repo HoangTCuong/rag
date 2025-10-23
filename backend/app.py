@@ -7,6 +7,8 @@ from chromadb.config import Settings
 from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
 import pdfplumber
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Khởi tạo ChromaDB với chế độ persistent
 chroma_client = chromadb.PersistentClient(path="./chroma_storage")
@@ -23,6 +25,13 @@ embedder = SentenceTransformer("all-MiniLM-L6-v2")
 # Khởi tạo FastAPI
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # hoặc ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
