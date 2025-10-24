@@ -153,6 +153,7 @@ def list_documents():
     return {"ids": results["ids"], "metadatas": results["metadatas"]}
 
 
+<<<<<<< HEAD
 # TAO CONTEXT CHO llm
 # @app.get("/search")
 # def search(query: str):
@@ -173,5 +174,46 @@ def list_documents():
 #         ]
 #     }
 
+=======
+# System prompt
+SYSTEM_PROMPT = (
+    "based on the information you have in the file, answer the question by them, "
+    "if you dont have information tell the user you don't know, use the same language with question from the user"
+)
+
+# Load model từ Hugging Face (miễn phí, chạy local)
+model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.float16, device_map="auto")
+
+@app.get("/ask")
+def ask(query: str = Query(..., description="Câu hỏi của người dùng")):
+    # Truy vấn ChromaDB
+    query_embedding = embedder.encode(query).tolist()
+    results = collection.query(query_embeddings=[query_embedding], n_results=5)
+
+    # Ghép các đoạn văn bản liên quan
+    context = "\n".join([doc for sublist in results["documents"] for doc in sublist])
+
+    # Tạo prompt cho LLM
+    full_prompt = f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion:\n{query}"
+
+    # Tokenize và sinh câu trả lời
+    inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+    output = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9
+    )
+    answer = tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # Cắt bỏ phần prompt nếu model lặp lại
+    if "Question:" in answer:
+        answer = answer.split("Question:")[-1].strip()
+
+    return JSONResponse(content={"answer": answer})
+>>>>>>> 57e2659ac03c9674e253836fe4d50a48e592f21b
 
 
