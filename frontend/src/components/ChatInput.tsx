@@ -2,33 +2,59 @@ import React, { useRef, useState } from 'react';
 import { FiPlus, FiMic, FiSend } from 'react-icons/fi';
 
 const ChatInput = () => {
-  const [fileName, setFileName] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
+  // 🔹 Hàm khi người dùng click nút "+"
   const handleChooseFile = () => {
-    fileInputRef.current?.click();
-  }
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.file?.[0];
+  // Kiem tra xem co phai file PDF khong
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    setFileName(file.name);
-    setError("");
-    setSuccess("");
-
-    if (file.type !== "application/pdf") {
-      setError("Chi nhan upload file pdf thoi ban oi!");
+    if (file.type !== 'application/pdf') {
+      setError('Vui lòng chọn file PDF hợp lệ');
+      setSuccess('');
       return;
     }
 
-    setUploading(true);
-  }
+  setFileName(file.name);
+  setError('');
+  setSuccess('');
+  setUploading(true);
 
-  
+   try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:8000/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Lỗi upload file');
+      }
+
+      const data = await response.json();
+      setSuccess(`✅ ${data.message}`);
+      setError('');
+    } catch (err: any) {
+      setError(`❌ ${err.message}`);
+      setSuccess('');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col items-center px-2 py-3 bg-transparent">
